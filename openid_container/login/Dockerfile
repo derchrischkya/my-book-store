@@ -1,0 +1,1 @@
+FROM oryd/hydra-login-consent-node:v1.10.6
