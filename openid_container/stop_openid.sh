@@ -1,2 +1,2 @@
-docker stop postgres openid-server openid-login
-docker rm postgres openid-server openid-login
+docker stop openid-server openid-login
+docker rm openid-server openid-login

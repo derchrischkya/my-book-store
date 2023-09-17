@@ -13,13 +13,13 @@ The project is used as playground with REST-API and BackendDB Interaction writte
 - Docker
 
 ### Installing
-- None
+- tbd
 
 ### Executing program
-- None
+- tbd
 
 ## Help
-- None
+- tbd
 
 ## Authors
 @derchrischkya

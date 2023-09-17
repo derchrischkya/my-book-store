@@ -18,6 +18,7 @@ run-postgress:
 	docker run \
   --name postgres \
   -p 5432:5432 \
+  -v /tmp/postgres:/var/lib/postgresql/data \
   -e POSTGRES_USER=hydra \
   -e POSTGRES_PASSWORD=secret \
   -e POSTGRES_DB=hydra \

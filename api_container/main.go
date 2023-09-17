@@ -19,7 +19,7 @@ func main() {
 	router.GET("/api/ping", authentication.Authenticate(healthcheck.Ping()))
 
 	// Command routes. (verb + noun, imperative)
-	router.POST("/api/inventory/capture-book", inventory.CaptureBook())
+	router.POST("/api/inventory/capture-book", authentication.Authenticate(inventory.CaptureBook()))
 	// router.POST("/api/lending/lend-book", inventory.LendBook())
 
 	// Query routes (noun)
