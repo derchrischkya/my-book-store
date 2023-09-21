@@ -11,4 +11,4 @@ ENV SECRETS_SYSTEM=$("export LC_CTYPE=C; cat /dev/urandom | tr -dc 'a-zA-Z0-9' |
 
 # The database url points us at the postgres instance. This could also be an ephemeral in-memory database (`export DSN=memory`)
 # or a MySQL URI.
-ENV DSN=postgres://hydra:secret@host.docker.internal:5432/hydra?sslmode=disable
+ENV DSN=postgres://libary:secret@host.docker.internal:5432/libary?sslmode=disable

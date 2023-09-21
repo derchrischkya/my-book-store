@@ -20,14 +20,14 @@ migrate-openid:
 	docker run -it --rm \
 	--net=host \
   	$(IMAGE_NAME):latest \
-  	migrate sql --yes postgres://hydra:secret@host.docker.internal:5432/hydra?sslmode=disable
+  	migrate sql --yes postgres://libary:secret@host.docker.internal:5432/libary?sslmode=disable
 
 run-openid:
 	docker run -d \
 	--name openid-server \
 	-p 5444:4444 \
 	-p 5445:4445 \
-	-e DSN=postgres://hydra:secret@host.docker.internal:5432/hydra?sslmode=disable \
+	-e DSN=postgres://libary:secret@host.docker.internal:5432/libary?sslmode=disable \
 	-e URLS_SELF_ISSUER=https://localhost:5444/ \
 	-e URLS_CONSENT=http://localhost:9020/consent \
 	-e URLS_LOGIN=http://localhost:9020/login \

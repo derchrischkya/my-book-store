@@ -6,3 +6,6 @@
 ## How to run?
 - `start_openid.sh` this starts container
 - `stop_openid.sh` this stops container
+
+## First creation
+- some databases and libaries needs to be created for the libary-api check `inital_setup`
