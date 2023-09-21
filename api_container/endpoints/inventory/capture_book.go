@@ -2,58 +2,74 @@ package inventory
 
 import (
 	"encoding/json"
-	"io"
+	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
+	"github.com/derchrischkya/libary/database"
 	"github.com/julienschmidt/httprouter"
 )
 
 type CaptureBookRequestBody struct {
-	Title  string `json:"title"`
-	Author string `json:"author"`
+	Title    string `json:"title"`
+	Author   string `json:"author"`
+	Category string `json:"category"`
+	Isbn     string `json:"isbn"`
 }
 
 type CaptureBookResponseBody struct {
-	ID uuid.UUID `json:"id"`
+	ID string `json:"id"`
+}
+
+type Response struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 func CaptureBook() httprouter.Handle {
 	return func(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-		log.Println("Started: running endpoint to capure new book")
-		// NON-PROD ready --> request.Body can be 10tb and crash server
-		// PROD - Use diffrent reader with size limitation functionality
-		requestBodyBytes, err := io.ReadAll(request.Body)
-		if err != nil {
-			// NON-PROD ready --> is return server error to customer!!!
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		log.Println("Started: running endpoint to capture a new book")
 
+		// Read and parse the request body
 		var requestBody CaptureBookRequestBody
-		err = json.Unmarshal(requestBodyBytes, &requestBody)
-
+		err := json.NewDecoder(request.Body).Decode(&requestBody)
 		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			http.Error(writer, "Invalid JSON request body", http.StatusBadRequest)
 			return
 		}
 
-		id := uuid.New()
-		log.Println("received capture-book", id, requestBody)
-
-		// Logic...MinIO :)
-
-		responseBody := CaptureBookResponseBody{
-			ID: id,
+		// Execute the prepared SQL statement with the book details
+		responseBytes, err := database.CaptureBook(requestBody.Author, requestBody.Title, requestBody.Isbn, requestBody.Category)
+		if err != nil {
+			http.Error(writer, "Failed to insert book into the database", http.StatusInternalServerError)
+			log.Printf("Failed to insert book into the database: %v", err)
+			return
 		}
 
+		// Unmarshal JSON response into a struct
+		var insertResponse Response
+		err = json.Unmarshal(responseBytes, &insertResponse)
+		if err != nil {
+			http.Error(writer, "Failed to insert book into the database", http.StatusInternalServerError)
+			fmt.Println("Error unmarshaling JSON response:", err)
+			return
+		}
+
+		// Prepare the response with the captured book ID
+		responseBody := CaptureBookResponseBody{
+			ID: insertResponse.Message,
+		}
+
+		// Marshal the response body to JSON
 		responseBodyBytes, err := json.Marshal(responseBody)
 		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			http.Error(writer, "Failed to insert book into the database", http.StatusInternalServerError)
+			log.Printf("Failed to marshal response: %v", err)
 			return
 		}
 
+		log.Println("End: finished endpoint to capture a new book", insertResponse.Message)
+		// Write the response
 		writer.WriteHeader(http.StatusOK)
 		writer.Header().Set("Content-Type", "application/json")
 		writer.Write(responseBodyBytes)
