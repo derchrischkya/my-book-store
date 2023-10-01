@@ -1,4 +1,7 @@
 # Changelog
+## 2023-10-01 @derchrischkya
+- added inital_containers folder to store components required for the initial setup of the project
+
 ## 2023-09-21 @derchrischkya
 - added startup shell script for persistent-database infrastructure `database_container/db/*`
 - updated Dokerfile for Copy folder to container on build-path
