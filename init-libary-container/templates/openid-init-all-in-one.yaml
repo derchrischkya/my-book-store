@@ -1,0 +1,73 @@
+## This is a template for the openid container
+## Documentation about the ory container can be found here: https://www.ory.sh/docs/hydra/
+## This container is used to manage the authentication and authorization of the application
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openid
+  labels:
+    name: openid
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openid
+  namespace: openid
+  labels:
+    name: openid
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: openid
+  template:
+    metadata:
+      labels:
+        name: openid
+    spec:
+      containers:
+      - name: openid
+        image: oryd/hydra:v1.10.6
+        ports: 
+        - containerPort: 5444
+        env:
+        - name: SECRETS_SYSTEM
+          value: myrandomvalue1234567890
+        - name: DSN
+          value: postgres://libary:secret@database.database.svc.cluster.local:5432/libary?sslmode=disable
+        - name: URLS_SELF_ISSUER
+          value: https://openid.openid.svc.cluster.local:5444/
+        - name: URLS_LOGIN
+          value: http://openid.openid.svc.cluster.local:5444/oauth2/auth
+        - name: URLS_CONSENT
+          value: http://openid.openid.svc.cluster.local:5444/oauth2/auth/requests/consent
+        # Just spin & wait forever
+        command: [ "hydra" ]
+        args: [ "serve", "all" ]
+      initContainers:
+        - name: openid-migration
+          image: oryd/hydra:v1.10.6
+          env:
+          - name: SECRETS_SYSTEM
+            value: myrandomvalue1234567890 
+          - name: DSN
+            value: postgres://libary:secret@database.database.svc.cluster.local:5432/libary?sslmode=disable
+          command: ["hydra"]
+          args: ["migrate", "sql", "--yes", "--read-from-env"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openid
+  namespace: openid
+  labels:
+    name: openid
+spec:
+  type: NodePort
+  ports:
+  - port: 5444
+    targetPort: 5444
+    nodePort: 30000
+  selector:
+    name: openid
