@@ -1,0 +1,44 @@
+## Includes the post-install job that will be run after the main install
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{.Release.Name}}"
+  labels:
+    app.kubernetes.io/managed-by: {{.Release.Service | quote }}
+    app.kubernetes.io/instance: {{.Release.Name | quote }}
+    helm.sh/chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{.Release.Name}}"
+      labels:
+        app.kubernetes.io/managed-by: {{.Release.Service | quote }}
+        app.kubernetes.io/instance: {{.Release.Name | quote }}
+        helm.sh/chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: post-install-job
+        image: "alpine:3.3"
+        env: 
+        - name: http
+          value: "http://openid.openid.svc.cluster.local:4444"
+        - name: client_id
+          value: "some-client-id"
+        command: ["/bin/sh", "-c", "create-client.sh"]
+        volumeMounts:
+        - name: create-client
+          mountPath: /create-client
+      volumes:
+      - name: create-client
+        configMap:
+          name: create-client
+          items:
+          - key: create-client.sh
+            path: create-client.sh

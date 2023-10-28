@@ -1,3 +1,4 @@
+-- Description: Create books table
 CREATE TABLE books (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     title VARCHAR ( 50 ) NOT NULL,
