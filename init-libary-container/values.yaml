@@ -80,3 +80,9 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+openid:
+  url: "https://openid.backend.svc.cluster.local:4445/clients"
+  name: "libary"
+  id: "15e444a6-27b7-47fc-bcd3-86cd68301b43"
+  secret: "1some-client-secret2"

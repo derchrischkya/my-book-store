@@ -1,7 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: create-client
+  namespace: backend
+  labels:
+    name: create-client
+data:
+  create-client.sh: {{ .Files.Get "files/openid/create-client.sh" | quote}}
+---
 ## Includes the post-install job that will be run after the main install
 apiVersion: batch/v1
 kind: Job
 metadata:
+  namespace: backend
   name: "{{.Release.Name}}"
   labels:
     app.kubernetes.io/managed-by: {{.Release.Service | quote }}
@@ -22,23 +33,30 @@ spec:
         app.kubernetes.io/instance: {{.Release.Name | quote }}
         helm.sh/chart: "{{.Chart.Name}}-{{.Chart.Version}}"
     spec:
+      securityContext:
+        runAsUser: 0
       restartPolicy: Never
       containers:
       - name: post-install-job
-        image: "alpine:3.3"
+        image: alpine/curl:latest
         env: 
-        - name: http
-          value: "http://openid.openid.svc.cluster.local:4444"
-        - name: client_id
-          value: "some-client-id"
-        command: ["/bin/sh", "-c", "create-client.sh"]
+        - name: OPENID_URL
+          value: {{ .Values.openid.url | quote}}
+        - name: CLIENT_NAME
+          value: {{ .Values.openid.name | quote}}
+        - name: CLIENT_ID
+          value: {{ .Values.openid.id | quote}}
+        - name: CLIENT_SECRET
+          value: {{ .Values.openid.secret | quote}}
+        command: ["/bin/sh", "-c", "/tmp/create-client.sh"]
         volumeMounts:
         - name: create-client
-          mountPath: /create-client
+          mountPath: /tmp
       volumes:
       - name: create-client
         configMap:
           name: create-client
+          defaultMode: 0777
           items:
           - key: create-client.sh
             path: create-client.sh

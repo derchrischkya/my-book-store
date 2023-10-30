@@ -1,14 +1,16 @@
 # Description: Create a new client in OpenID Connect
-wget --no-check-certificate --quiet \
-  --method POST \
-  --timeout=0 \
-  --header 'Content-Type: application/json' \
-  --body-data '{
-    "client_name": "libary",
-    "client_secret": $CLIENT_SECRET,
+while [ $(curl -sw '%{http_code}' $OPENID_URL -k -o /dev/null) -ne 200 ]; do
+  sleep 2;
+  echo "Waiting for OpenID Connect to be ready..."
+done
+
+wget --header="Content-Type: application/json" --post-data='{
+    "client_name": "'"$CLIENT_NAME"'",
+    "client_id": "'"$CLIENT_ID"'",
+    "client_secret": "'"$CLIENT_SECRET"'",
     "scope": "mail user",
-    "grant_types": ["authorization_code","refresh_token","client_credentials","implicit"],
+    "grant_types": ["authorization_code", "refresh_token", "client_credentials", "implicit"],
     "response_types": ["token", "code", "id_token"],
     "grant_scopes": "mail",
     "access_token_strategy": "opaque"
-}' \ $OPENID_URL
+}' --header="Authorization: Bearer $ACCESS_TOKEN" --no-check-certificate -O output.json $OPENID_URL

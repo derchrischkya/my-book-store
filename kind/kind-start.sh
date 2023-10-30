@@ -1,1 +1,0 @@
-kind create cluster --config k8s-cluster.yaml

@@ -1,19 +1,11 @@
 ## This is a template for the openid container
 ## Documentation about the ory container can be found here: https://www.ory.sh/docs/hydra/
 ## This container is used to manage the authentication and authorization of the application
-
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: openid
-  labels:
-    name: openid
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: openid
-  namespace: openid
+  namespace: backend
   labels:
     name: openid
 spec:
@@ -35,13 +27,13 @@ spec:
         - name: SECRETS_SYSTEM
           value: myrandomvalue1234567890
         - name: DSN
-          value: postgres://libary:secret@database.database.svc.cluster.local:5432/libary?sslmode=disable
+          value: postgres://libary:secret@database.backend.svc.cluster.local:5432/libary?sslmode=disable
         - name: URLS_SELF_ISSUER
-          value: https://openid.openid.svc.cluster.local:5444/
+          value: https://openid.backend.svc.cluster.local:5444/
         - name: URLS_LOGIN
-          value: http://openid.openid.svc.cluster.local:5444/oauth2/auth
+          value: http://openid.backend.svc.cluster.local:5444/oauth2/auth
         - name: URLS_CONSENT
-          value: http://openid.openid.svc.cluster.local:5444/oauth2/auth/requests/consent
+          value: http://openid.backend.svc.cluster.local:5444/oauth2/auth/requests/consent
         # Just spin & wait forever
         command: [ "hydra" ]
         args: [ "serve", "all" ]
@@ -52,7 +44,7 @@ spec:
           - name: SECRETS_SYSTEM
             value: myrandomvalue1234567890 
           - name: DSN
-            value: postgres://libary:secret@database.database.svc.cluster.local:5432/libary?sslmode=disable
+            value: postgres://libary:secret@database.backend.svc.cluster.local:5432/libary?sslmode=disable
           command: ["hydra"]
           args: ["migrate", "sql", "--yes", "--read-from-env"]
 ---
@@ -60,17 +52,17 @@ apiVersion: v1
 kind: Service
 metadata:
   name: openid
-  namespace: openid
+  namespace: backend
   labels:
     name: openid
 spec:
   type: NodePort
   ports:
-  - name: openid-auth
+  - name: openid-introspect
     port: 4444
     targetPort: 4444
     nodePort: 30000
-  - name: openid-introspect 
+  - name: openid-authorize 
     port: 4445
     targetPort: 4445
     nodePort: 30001
