@@ -14,3 +14,8 @@ wget --header="Content-Type: application/json" --post-data='{
     "grant_scopes": "mail",
     "access_token_strategy": "opaque"
 }' --header="Authorization: Bearer $ACCESS_TOKEN" --no-check-certificate -O output.json $OPENID_URL
+
+if [ $? -ne 0 || $? -ne 409 ]; then
+  echo "Error creating client"
+  exit 1
+fi

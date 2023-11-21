@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: create-client
-  namespace: backend
+  name: create-client-cm
+  namespace: {{ .Release.Namespace }}
   labels:
-    name: create-client
+    name: create-client-cm
 data:
   create-client.sh: {{ .Files.Get "files/openid/create-client.sh" | quote}}
 ---
@@ -12,8 +12,8 @@ data:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  namespace: backend
-  name: "{{.Release.Name}}"
+  namespace: {{ .Release.Namespace }}
+  name: {{.Release.Name}}-job
   labels:
     app.kubernetes.io/managed-by: {{.Release.Service | quote }}
     app.kubernetes.io/instance: {{.Release.Name | quote }}
@@ -27,7 +27,7 @@ metadata:
 spec:
   template:
     metadata:
-      name: "{{.Release.Name}}"
+      name: {{.Release.Name}}-job
       labels:
         app.kubernetes.io/managed-by: {{.Release.Service | quote }}
         app.kubernetes.io/instance: {{.Release.Name | quote }}
@@ -35,27 +35,27 @@ spec:
     spec:
       securityContext:
         runAsUser: 0
-      restartPolicy: Never
+      restartPolicy: OnFailure
       containers:
-      - name: post-install-job
-        image: alpine/curl:latest
+      - name: post-install-job-container
+        image: {{ .Values.openid.additionalImages.curlContainer }}
         env: 
         - name: OPENID_URL
-          value: {{ .Values.openid.url | quote}}
+          value: "https://{{ .Values.openid.name }}-svc.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.openid.ports.authorize.targetPort }}/clients"
         - name: CLIENT_NAME
-          value: {{ .Values.openid.name | quote}}
+          value: {{ .Values.openid.initClient.name }}
         - name: CLIENT_ID
-          value: {{ .Values.openid.id | quote}}
+          value: {{ .Values.openid.initClient.id }}
         - name: CLIENT_SECRET
-          value: {{ .Values.openid.secret | quote}}
+          value: {{ .Values.openid.initClient.secret }}
         command: ["/bin/sh", "-c", "/tmp/create-client.sh"]
         volumeMounts:
-        - name: create-client
+        - name: create-client-cm
           mountPath: /tmp
       volumes:
-      - name: create-client
+      - name: create-client-cm
         configMap:
-          name: create-client
+          name: create-client-cm
           defaultMode: 0777
           items:
           - key: create-client.sh

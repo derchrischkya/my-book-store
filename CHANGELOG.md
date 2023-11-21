@@ -1,4 +1,8 @@
 # Changelog
+## 2023-10-30 @derchrischkya
+- added `post-helm-job.yaml` to add inital client-id and client-secret after the openid is up and running
+- added `libary.postman_collection.json` to test the api endpoints
+
 ## 2023-10-01 @derchrischkya
 - added inital_containers folder to store components required for the initial setup of the project
 

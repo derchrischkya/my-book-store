@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-
+namespace: backend
 image:
   repository: nginx
   pullPolicy: IfNotPresent
@@ -71,7 +71,7 @@ resources: {}
 autoscaling:
   enabled: false
   minReplicas: 1
-  maxReplicas: 100
+  maxReplicas: 10
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
@@ -81,8 +81,37 @@ tolerations: []
 
 affinity: {}
 
+postgres:
+  name: database
+  image: postgres:latest
+  user: libary
+  secret: secret
+  db: libary
+  efsId: fs-0c50ae3b927d8c949
+  ports:
+    postgres:
+      port: 5432
+      targetPort: 5432
+      nodePort: 30002
+  curlContainer: alpine/curl:latest
+
 openid:
-  url: "https://openid.backend.svc.cluster.local:4445/clients"
-  name: "libary"
-  id: "15e444a6-27b7-47fc-bcd3-86cd68301b43"
-  secret: "1some-client-secret2"
+  name: openid
+  image: oryd/hydra:v1.10.6
+  ports:
+    introspect:
+      port: 4444
+      targetPort: 4444
+      nodePort: 30000
+    authorize: 
+      port: 4445
+      targetPort: 4445
+      nodePort: 30001
+  secrets:
+    system: myrandomvalue1234567890
+  additionalImages:
+    curlContainer: alpine/curl:latest
+  initClient:
+    name: libary
+    id: 15e444a6-27b7-47fc-bcd3-86cd68301b43
+    secret: 1some-client-secret2

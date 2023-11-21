@@ -1,70 +1,73 @@
-## This is a template for the openid container
+# This is a template for the openid container
 ## Documentation about the ory container can be found here: https://www.ory.sh/docs/hydra/
 ## This container is used to manage the authentication and authorization of the application
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: openid
-  namespace: backend
+  name: {{ .Values.openid.name }}-deployment
+  namespace: {{ .Release.Namespace }}
   labels:
-    name: openid
+    name: {{ .Values.openid.name }}-deployment
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicasCount }}
   selector:
     matchLabels:
-      name: openid
+      name: {{ .Values.openid.name }}-pod
   template:
     metadata:
       labels:
-        name: openid
+        name: {{ .Values.openid.name }}-pod
     spec:
       containers:
-      - name: openid
-        image: oryd/hydra:v1.10.6
+      - name: {{ .Values.openid.name }}-container
+        image: {{ .Values.openid.image }}
         ports: 
-        - containerPort: 5444
+        - name: "introspect-port"
+          containerPort: {{ .Values.openid.ports.introspect.targetPort }}
+        - name: "authorize-port"
+          containerPort: {{ .Values.openid.ports.authorize.targetPort }}
         env:
         - name: SECRETS_SYSTEM
-          value: myrandomvalue1234567890
+          value: {{ .Values.openid.secrets.system }}
         - name: DSN
-          value: postgres://libary:secret@database.backend.svc.cluster.local:5432/libary?sslmode=disable
+          value: "postgres://{{ .Values.postgres.db }}:{{ .Values.postgres.secret }}@{{ .Values.postgres.name }}-svc.{{ .Release.Namespace }}.svc.cluster.local:5432/libary?sslmode=disable"
         - name: URLS_SELF_ISSUER
-          value: https://openid.backend.svc.cluster.local:5444/
+          value: "https://{{ .Values.openid.name }}-svc.{{ .Release.Namespace }}.svc.cluster.local:4444/"
         - name: URLS_LOGIN
-          value: http://openid.backend.svc.cluster.local:5444/oauth2/auth
+          value: "http://{{ .Values.openid.name }}-svc.{{ .Release.Namespace }}.svc.cluster.local:4444/oauth2/auth"
         - name: URLS_CONSENT
-          value: http://openid.backend.svc.cluster.local:5444/oauth2/auth/requests/consent
+          value: "http://{{ .Values.openid.name }}-svc.{{ .Release.Namespace }}.svc.cluster.local:4444/oauth2/auth/requests/consent"
         # Just spin & wait forever
         command: [ "hydra" ]
         args: [ "serve", "all" ]
       initContainers:
-        - name: openid-migration
-          image: oryd/hydra:v1.10.6
+        - name: openid-migration-container
+          image: {{ .Values.openid.image }}
           env:
           - name: SECRETS_SYSTEM
-            value: myrandomvalue1234567890 
+            value: {{ .Values.openid.secrets.system }}
           - name: DSN
-            value: postgres://libary:secret@database.backend.svc.cluster.local:5432/libary?sslmode=disable
+            value: "postgres://{{ .Values.postgres.db }}:{{ .Values.postgres.secret }}@{{ .Values.postgres.name }}-svc.{{ .Release.Namespace }}.svc.cluster.local:5432/libary?sslmode=disable"
           command: ["hydra"]
           args: ["migrate", "sql", "--yes", "--read-from-env"]
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: openid
-  namespace: backend
+  name: {{ .Values.openid.name }}-svc
+  namespace: {{ .Release.Namespace }}
   labels:
-    name: openid
+    name: {{ .Values.openid.name }}-svc
 spec:
   type: NodePort
   ports:
-  - name: openid-introspect
-    port: 4444
-    targetPort: 4444
-    nodePort: 30000
-  - name: openid-authorize 
-    port: 4445
-    targetPort: 4445
-    nodePort: 30001
+  - name: "{{ .Values.openid.name }}-introspect"
+    port: {{ .Values.openid.ports.introspect.port }}
+    targetPort: {{ .Values.openid.ports.introspect.targetPort }}
+    nodePort: {{ .Values.openid.ports.introspect.nodePort }}
+  - name: "{{ .Values.openid.name }}-authorize"
+    port: {{ .Values.openid.ports.authorize.port }}
+    targetPort: {{ .Values.openid.ports.authorize.targetPort }}
+    nodePort: {{ .Values.openid.ports.authorize.nodePort }}
   selector:
-    name: openid
+    name: {{ .Values.openid.name }}-pod
